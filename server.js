@@ -2,10 +2,20 @@
 const express = require('express');
 // require the json data
 const {animals} = require ('./data/animals.json');
+// require the file system
+const fs = require('fs');
+// require for working with file and directory paths
+const path = require('path');
+
 // set an enviornment to use the port neccessary for Heroku since it runs on port 80
 const PORT = process.env.PORT || 3001;
 // first thing is to instantiate the server and start express with app const
 const app = express();
+// app.use is middleware, which is a method executed by our Express.js server that mounts a function to the server that our requests will pass through before getting to the intended endpoint. Both methods below are needed to be set up every time you create a server that's looking to accept POST data
+// parse incoming string or array data
+app.use(express.urlencoded({ extended: true }));
+// parse incoming JSON data
+app.use(express.json());
 
 //function to handle the filter functionality. Take in the req.query and filter through the array returning a new filtered array
 function filterByQuery(query, animalsArray) {
@@ -52,6 +62,37 @@ function findById(id, animalsArray) {
     return result;
 }
 
+// function that accepts the POST route's req.body value and the array to add the data to. will be executed inteh app's post route
+function createNewAnimal(body, animalsArray){
+    const animal = body;
+    animalsArray.push(animal);
+    // this is a synchronous version of fs.writeFile that doesn't require a callback function
+    fs.writeFileSync(
+        // method the file to the subdirectory using teh path.join() method which takes in the directory of the file we execute the code in, with the path to the json file 
+        path.join(__dirname, './data/animals.json'),
+        // save the JavaScript array data as JSON using the stringfy method to convert it. The null argument means we don't want to edit any of our existing data; if we did, we could pass something in there. The 2 indicates we want to create white space between our values to make it more readable
+        JSON.stringify({ animals: animalsArray }, null, 2)
+    );
+    return animal;
+};
+
+// validation function to be used in the POST. the animal parameter is going to be the content from req.body, and we're going to run its properties through a series of validation checks. If any of them are false, we will return false and not create the animal data.
+function validateAnimal(animal) {
+    if (!animal.name || typeof animal.name !== 'string') {
+      return false;
+    }
+    if (!animal.species || typeof animal.species !== 'string') {
+      return false;
+    }
+    if (!animal.diet || typeof animal.diet !== 'string') {
+      return false;
+    }
+    if (!animal.personalityTraits || !Array.isArray(animal.personalityTraits)) {
+      return false;
+    }
+    return true;
+  }
+
 //add the route to request the data. get method requires 2 arguments. first one is a string that describes the route to get the data from and the second is a callback that will execute every time the route is accessed
 app.get('/api/animals', (req,res) => {
     let results = animals;
@@ -72,7 +113,23 @@ app.get('/api/animals/:id', (req,res) => {
     } else {
         res.sendStatus(404);
     }
-})
+});
+
+// create a route for the POST
+app.post('/api/animals', (req, res) =>{
+    // req.body is where our incoming content will be
+    // set id based on what the next index of the array will be
+    req.body.id = animals.length.toString();
+
+    // if any data in req.body is incorrect, send 400 error back
+    if(!validateAnimal(req.body)){
+        res.status(400).send('The animal is not properly formatted.');
+    } else {
+        // add animal to json file and animals array in this function
+        const animal = createNewAnimal(req.body, animals);
+        res.json(animal);
+    }
+});
 
 // start listening
 app.listen(PORT, ()=> {
