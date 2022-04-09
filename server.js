@@ -11,11 +11,15 @@ const path = require('path');
 const PORT = process.env.PORT || 3001;
 // first thing is to instantiate the server and start express with app const
 const app = express();
+
 // app.use is middleware, which is a method executed by our Express.js server that mounts a function to the server that our requests will pass through before getting to the intended endpoint. Both methods below are needed to be set up every time you create a server that's looking to accept POST data
 // parse incoming string or array data
 app.use(express.urlencoded({ extended: true }));
 // parse incoming JSON data
 app.use(express.json());
+// middleware to the server that uses the express.static method taking in the file path to the location in the application and instructing the server to make the files static resources to be accessed without creating a endpoint
+app.use(express.static('public'));
+
 
 //function to handle the filter functionality. Take in the req.query and filter through the array returning a new filtered array
 function filterByQuery(query, animalsArray) {
@@ -130,6 +134,23 @@ app.post('/api/animals', (req, res) =>{
         res.json(animal);
     }
 });
+
+// route to access the main api and loads the html. the '/' is the base of the route
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+});
+// route that goes to the animals html page and not the api. using api will expect json data to return
+app.get('/animals', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/animals.html'));
+  });
+// route that goes to the zookeepers html page and not the api. using api will expect json data to return
+app.get('/zookeepers', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/zookeepers.html'));
+  });
+// route that is a wildcard meaning any route that wasn't previously defined will fall under this request and will receive the homepage as the response. This always come last in the route order
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+  });
 
 // start listening
 app.listen(PORT, ()=> {
