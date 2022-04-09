@@ -46,7 +46,13 @@ function filterByQuery(query, animalsArray) {
     return filteredResults;
 }
 
-//add the route to request the data. get method requires 2 arguments. first one is a string that describes the route to get teh data from and the second is a callback that will execute every time the route is accessed
+// function that takes in the id and array of animals and returns a single animal object
+function findById(id, animalsArray) {
+    const result = animalsArray.filter(animal => animal.id === id)[0];
+    return result;
+}
+
+//add the route to request the data. get method requires 2 arguments. first one is a string that describes the route to get the data from and the second is a callback that will execute every time the route is accessed
 app.get('/api/animals', (req,res) => {
     let results = animals;
     if(req.query){
@@ -56,6 +62,17 @@ app.get('/api/animals', (req,res) => {
     // response uses the send method, but change to json passing the data as a argument to tell it that it's expecting json data
     res.json(results);
 });
+
+// new GET route for the animals that takes in one id
+app.get('/api/animals/:id', (req,res) => {
+    const result = findById(req.params.id, animals);
+    // if result is true display json data, if not show response as 404 error
+    if (result){
+        res.json(result);
+    } else {
+        res.sendStatus(404);
+    }
+})
 
 // start listening
 app.listen(PORT, ()=> {
