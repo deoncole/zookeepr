@@ -2,6 +2,8 @@
 const express = require('express');
 // require the json data
 const {animals} = require ('./data/animals.json');
+// set an enviornment to use the port neccessary for Heroku since it runs on port 80
+const PORT = process.env.PORT || 3001;
 // first thing is to instantiate the server and start express with app const
 const app = express();
 
@@ -56,6 +58,6 @@ app.get('/api/animals', (req,res) => {
 });
 
 // start listening
-app.listen(3001, ()=> {
-    console.log('API server now on port 3001!');
+app.listen(PORT, ()=> {
+    console.log(`API server now on port ${PORT}!`);
 })
